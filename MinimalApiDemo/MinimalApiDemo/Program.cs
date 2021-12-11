@@ -3,7 +3,7 @@ using MinimalApiDemo.Models;
 
 #region Configs
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<TodoDb>(opt => opt.UseInMemoryDatabase("TodoList"));
+builder.Services.AddDbContext<PizzaDb>(opt => opt.UseInMemoryDatabase("TodoList"));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -11,43 +11,46 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 #endregion
-app.MapGet("/todoitems", async (TodoDb db) =>
+app.MapGet("/pizza", async (PizzaDb db) =>
     await db.Todos.ToListAsync());
 
-app.MapGet("/todoitems/complete", async (TodoDb db) =>
-    await db.Todos.Where(t => t.IsComplete).ToListAsync());
+app.MapGet("/pizza/promo", async (PizzaDb db) =>
+    await db.Todos.Where(t => t.IsPromo).ToListAsync());
 
-app.MapGet("/todoitems/{id}", async (int id, TodoDb db) =>
+app.MapGet("/pizza/{id}", async (int id, PizzaDb db) =>
     await db.Todos.FindAsync(id)
-        is Todo todo
+        is Pizza todo
             ? Results.Ok(todo)
             : Results.NotFound());
 
-app.MapPost("/todoitems", async (Todo todo, TodoDb db) =>
+app.MapPost("/pizza", async (Pizza todo, PizzaDb db) =>
 {
     db.Todos.Add(todo);
     await db.SaveChangesAsync();
 
-    return Results.Created($"/todoitems/{todo.Id}", todo);
+    return Results.Created($"/pizza/{todo.Id}", todo);
 });
 
-app.MapPut("/todoitems/{id}", async (int id, Todo inputTodo, TodoDb db) =>
+app.MapPut("/pizza/{id}", async (int id, Pizza inputTodo, PizzaDb db) =>
 {
     var todo = await db.Todos.FindAsync(id);
 
     if (todo is null) return Results.NotFound();
 
     todo.Name = inputTodo.Name;
-    todo.IsComplete = inputTodo.IsComplete;
+    todo.Price = inputTodo.Price;
+    todo.Rating = inputTodo.Rating;
+    todo.Ingredients = inputTodo.Ingredients;
+    todo.IsPromo = inputTodo.IsPromo;
 
     await db.SaveChangesAsync();
 
     return Results.NoContent();
 });
 
-app.MapDelete("/todoitems/{id}", async (int id, TodoDb db) =>
+app.MapDelete("/pizza/{id}", async (int id, PizzaDb db) =>
 {
-    if (await db.Todos.FindAsync(id) is Todo todo)
+    if (await db.Todos.FindAsync(id) is Pizza todo)
     {
         db.Todos.Remove(todo);
         await db.SaveChangesAsync();
